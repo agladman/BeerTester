@@ -3,6 +3,7 @@
 """BeerTester: produces randomised multiple choice tests, based on BJCP data, to test
     knowledge of the ABVs, IBUs, and SRMs of individual beer styles."""
 
+import argparse
 from datetime import datetime
 import json
 import os
@@ -32,6 +33,14 @@ def get_wrong_answer_options(my_correct_answer, my_list):
     return options
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-s", "--studyaid", help="creates a study aid to accompany the test",
+                    action="store_true")
+args = parser.parse_args()
+test_id = uuid.uuid4().hex
+test_time = '{:%Y-%m-%d %H:%M}'.format(datetime.now())
+desktop = os.path.join(os.path.expanduser('~'), 'Desktop')
+
 # load beer data into list of objects, should get data for 92 beer styles
 data = json.load(open('BJCP2015.json'))
 beers = []
@@ -45,6 +54,16 @@ for beer in data['beers']:
             this_beer.SRM = ['SRM', subcat['guidelines']['vitalStatistics']['srm']]
             beers.append(this_beer)
 
+# now we have the beer data, output to a study aid if requested
+if args.studyaid:
+    with open(f'{desktop}/{test_id}_study_aid.txt', 'w') as s:
+        s.write(f'Test ID {test_id}, {test_time}\n\n')
+        for b in beers:
+            s.write(f'{b.beername}:\n')
+            s.write(f'\t{b.ABV[0]}: {b.ABV[1]}\n')
+            s.write(f'\t{b.IBU[0]}: {b.IBU[1]}\n')
+            s.write(f'\t{b.SRM[0]}: {b.SRM[1]}\n\n')
+
 # compile questions
 questions = []
 for x in range(20):
@@ -56,9 +75,6 @@ for x in range(20):
     questions.append([b.beername, correct_answer, answer_options])
 
 # output questions and answer key to text files
-desktop = os.path.join(os.path.expanduser('~'), 'Desktop')
-test_id = uuid.uuid4().hex
-test_time = '{:%Y-%m-%d %H:%M}'.format(datetime.now())
 with open(f'{desktop}/{test_id}.txt', 'w') as f:
     with open(f'{desktop}/{test_id}_answers.txt', 'w') as g:
         f.write(f'Test ID {test_id}, {test_time}\n\n')
