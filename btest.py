@@ -5,8 +5,10 @@
 
 from datetime import datetime
 import json
+import os
 import random
 import uuid
+
 
 class Beer(object):
     beername = ''
@@ -54,10 +56,11 @@ for x in range(20):
     questions.append([b.beername, correct_answer, answer_options])
 
 # output questions and answer key to text files
+desktop = os.path.join(os.path.expanduser('~'), 'Desktop')
 test_id = uuid.uuid4().hex
 test_time = '{:%Y-%m-%d %H:%M}'.format(datetime.now())
-with open(f'{test_id}.txt', 'w') as f:
-    with open(f'{test_id}_answers.txt', 'w') as g:
+with open(f'{desktop}/{test_id}.txt', 'w') as f:
+    with open(f'{desktop}/{test_id}_answers.txt', 'w') as g:
         f.write(f'Test ID {test_id}, {test_time}\n\n')
         g.write(f'Test ID {test_id}, {test_time}\n\n')
         for i, q in enumerate(questions):
