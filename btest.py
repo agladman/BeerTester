@@ -19,6 +19,22 @@ class Beer(object):
     SRM = None
 
 
+def load_data():
+    # load beer data into list of objects, should get data for 92 beer styles
+    data = json.load(open('BJCP2015.json'))
+    beer_objects = []
+    for beer in data['beers']:
+        if beer['number'] < 27:     # exclude weird categories at the end of the data
+            for subcat in beer['subcategories']:
+                this_beer = Beer()
+                this_beer.beername = subcat['name']
+                this_beer.ABV = ['ABV', subcat['guidelines']['vitalStatistics']['abv']]
+                this_beer.IBU = ['IBU', subcat['guidelines']['vitalStatistics']['ibu']]
+                this_beer.SRM = ['SRM', subcat['guidelines']['vitalStatistics']['srm']]
+                beer_objects.append(this_beer)
+    return beer_objects
+
+
 def get_wrong_answer_options(my_correct_answer, my_list):
     options = []
     while len(options) < 3:
@@ -34,69 +50,55 @@ def get_wrong_answer_options(my_correct_answer, my_list):
     return options
 
 
-# set some variables and add arguments for argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("-s", "--studyaid", help="creates a study aid instead of the test",
-                    action="store_true")
-args = parser.parse_args()
-test_id = uuid.uuid4().hex
-test_time = '{:%Y-%m-%d %H:%M}'.format(datetime.now())
-desktop = os.path.join(os.path.expanduser('~'), 'Desktop')
+def main():
+    # set some variables and add arguments for argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--studyaid", help="creates a study aid instead of the test",
+                        action="store_true")
+    args = parser.parse_args()
+    test_id = uuid.uuid4().hex
+    test_time = '{:%Y-%m-%d %H:%M}'.format(datetime.now())
+    desktop = os.path.join(os.path.expanduser('~'), 'Desktop')
 
-# load beer data into list of objects, should get data for 92 beer styles
-data = json.load(open('BJCP2015.json'))
-beers = []
-for beer in data['beers']:
-    if beer['number'] < 27:     # exclude weird categories at the end of the data
-        for subcat in beer['subcategories']:
-            this_beer = Beer()
-            this_beer.beername = subcat['name']
-            this_beer.ABV = ['ABV', subcat['guidelines']['vitalStatistics']['abv']]
-            this_beer.IBU = ['IBU', subcat['guidelines']['vitalStatistics']['ibu']]
-            this_beer.SRM = ['SRM', subcat['guidelines']['vitalStatistics']['srm']]
-            beers.append(this_beer)
+    # load in the beer data
+    beers = load_data()
 
-# now we have the beer data, output to a study aid if requested
-if args.studyaid:
+    # now we have the beer data, output to a study aid if requested
+    if args.studyaid:
 
-    # option to output study aid to txt file, now superceded
-    # with open(f'{desktop}/{test_id}_study_aid.txt', 'w') as s:
-    #     s.write(f'Test ID {test_id}, {test_time}\n\n')
-    #     for b in beers:
-    #         s.write(f'{b.beername}:\n')
-    #         s.write(f'\t{b.ABV[0]}: {b.ABV[1]}\n')
-    #         s.write(f'\t{b.IBU[0]}: {b.IBU[1]}\n')
-    #         s.write(f'\t{b.SRM[0]}: {b.SRM[1]}\n\n')
+        """outputs to a CSV file, a bit hacky with the IBU and SRM options
+            but it stops excel from automatically turning these columns into dates."""
+        with open(f'{desktop}/{test_id}_study_aid.csv', 'w', newline='') as csvfile:
+            mywriter = csv.writer(csvfile, dialect='excel')
+            mywriter.writerow(['NAME', 'ABV', 'IBU', 'SRM'])
+            for b in beers:
+                mywriter.writerow([b.beername, b.ABV[1], f'="{b.IBU[1]}"', f'="{b.SRM[1]}"'])
 
-    """outputs to a CSV file, a bit hacky with the IBU and SRM options
-        but it stops excel from automatically turning these columns into dates."""
-    with open(f'{desktop}/{test_id}_study_aid.csv', 'w', newline='') as csvfile:
-        mywriter = csv.writer(csvfile, dialect='excel')
-        mywriter.writerow(['NAME', 'ABV', 'IBU', 'SRM'])
-        for b in beers:
-            mywriter.writerow([b.beername, b.ABV[1], f'="{b.IBU[1]}"', f'="{b.SRM[1]}"'])
+    # if study aid is not requested, produce the test and answers instead
+    else:
+        # compile questions
+        questions = []
+        for x in range(20):
+            b = random.choice(beers)
+            correct_answer = random.choice([b.ABV, b.IBU, b.SRM])
+            answer_options = get_wrong_answer_options(correct_answer, beers)
+            answer_options.append(correct_answer[1])
+            random.shuffle(answer_options)
+            questions.append([b.beername, correct_answer, answer_options])
 
-# if study aid is not requested, produce the test and answers instead
-else:
-    # compile questions
-    questions = []
-    for x in range(20):
-        b = random.choice(beers)
-        correct_answer = random.choice([b.ABV, b.IBU, b.SRM])
-        answer_options = get_wrong_answer_options(correct_answer, beers)
-        answer_options.append(correct_answer[1])
-        random.shuffle(answer_options)
-        questions.append([b.beername, correct_answer, answer_options])
+        # output questions and answer key to text files
+        with open(f'{desktop}/{test_id}.txt', 'w') as f:
+            with open(f'{desktop}/{test_id}_answers.txt', 'w') as g:
+                f.write(f'Test ID {test_id}, {test_time}\n\n')
+                g.write(f'Test ID {test_id}, {test_time}\n\n')
+                for i, q in enumerate(questions):
+                    f.write(f'{i + 1}: What is the {q[1][0]} of {q[0]}?\n')
+                    for j in range(4):
+                        f.write(f'{"ABCD"[j]}: {q[2][j]}\n')
+                    f.write('\n')
+                    g.write(f'{i + 1}: {q[1][1]}\n')
+                f.write('\n--END--')
 
-    # output questions and answer key to text files
-    with open(f'{desktop}/{test_id}.txt', 'w') as f:
-        with open(f'{desktop}/{test_id}_answers.txt', 'w') as g:
-            f.write(f'Test ID {test_id}, {test_time}\n\n')
-            g.write(f'Test ID {test_id}, {test_time}\n\n')
-            for i, q in enumerate(questions):
-                f.write(f'{i + 1}: What is the {q[1][0]} of {q[0]}?\n')
-                for j in range(4):
-                    f.write(f'{"ABCD"[j]}: {q[2][j]}\n')
-                f.write('\n')
-                g.write(f'{i + 1}: {q[1][1]}\n')
-            f.write('\n--END--')
+
+if __name__ == "__main__":
+    main()
