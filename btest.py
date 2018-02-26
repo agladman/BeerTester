@@ -13,10 +13,12 @@ import uuid
 
 
 class Beer(object):
-    beername = ''
-    ABV = None
-    IBU = None
-    SRM = None
+
+    def __init__(self, beername, ABV, IBU, SRM):
+        self.beername = beername
+        self.ABV = ABV
+        self.IBU = IBU
+        self.SRM = SRM
 
 
 def load_data():
@@ -26,12 +28,11 @@ def load_data():
     for beer in data['beers']:
         if beer['number'] < 27:     # exclude weird categories at the end of the data
             for subcat in beer['subcategories']:
-                this_beer = Beer()
-                this_beer.beername = subcat['name']
-                this_beer.ABV = ['ABV', subcat['guidelines']['vitalStatistics']['abv']]
-                this_beer.IBU = ['IBU', subcat['guidelines']['vitalStatistics']['ibu']]
-                this_beer.SRM = ['SRM', subcat['guidelines']['vitalStatistics']['srm']]
-                beer_objects.append(this_beer)
+                beername = subcat['name']
+                ABV = ['ABV', subcat['guidelines']['vitalStatistics']['abv']]
+                IBU = ['IBU', subcat['guidelines']['vitalStatistics']['ibu']]
+                SRM = ['SRM', subcat['guidelines']['vitalStatistics']['srm']]
+                beer_objects.append(Beer(beername, ABV, IBU, SRM))
     return beer_objects
 
 
