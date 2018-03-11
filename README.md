@@ -8,7 +8,7 @@ Optional arguments when running btest.py:
 
 * -s, --studyaid: creates a study aid instead of the test
 * -t, --terminal: runs the quiz in the terminal
-* -l, --length: set number of question, default is 20, max is 30
+* -l, --length: set number of questions, default is 20, max is 30
 
 
 Stats drawn from the data are: ABV, IBU and SRM. This is good to know if you're studying for BCJP certification, or a Beer Sommelier or Cicerone qualification.

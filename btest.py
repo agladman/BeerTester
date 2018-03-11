@@ -123,7 +123,7 @@ def main():
                         action="store_true")
     parser.add_argument("-t", "--terminal", help="runs the quiz in the terminal",
                         action="store_true")
-    parser.add_argument("-l", "--length", help="set number of question, default is 20, max is 30",
+    parser.add_argument("-l", "--length", help="set number of questions, default is 20, max is 30",
                         action="store_true")
     args = parser.parse_args()
 
@@ -149,7 +149,7 @@ def main():
 
         # compile questions
         questions = []
-        for x in range(length):
+        for _ in range(length):
             b = random.choice(beers)
             q = build_question(b, beers)
             questions.append(q)
@@ -157,7 +157,8 @@ def main():
         # if terminal otion was given, run the quiz in the terminal window
         if args.terminal:
             my_score = 0
-            for q in questions:
+            for i, q in enumerate(questions):
+                print(f'\nQ{i}')
                 my_score = score(q, my_score)
                 time.sleep(0.5)
             os.system('cls' if os.name == 'nt' else 'clear')
