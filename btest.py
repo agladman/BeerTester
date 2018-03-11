@@ -24,7 +24,8 @@ class Beer(object):
 
 
 def load_data():
-    """Loads beer data, should get data for 92 beer styles. Returns objects in a list."""
+    """Loads beer data, should get data for 92 beer styles. Builds Beer objects based on this data
+        and returns them in a list."""
     data = json.load(open('BJCP2015.json'))
     beer_objects = []
     for beer in data['beers']:
@@ -115,7 +116,6 @@ def build_queue(my_list):
 
 def main():
     """Runs the script."""
-    # set arguments for argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--studyaid", help="creates a study aid instead of the test",
                         action="store_true")
@@ -125,7 +125,6 @@ def main():
                         action="store_true")
     args = parser.parse_args()
 
-    # load in the beer data
     beers = load_data()
 
     # now we have the beer data, output to a study aid if requested
@@ -177,9 +176,9 @@ def main():
                     for i, q in enumerate(questions):
                         f.write(f'{i + 1}: What is the {q[1][0]} of {q[0]}?\n')
                         for j in range(4):
-                            f.write(f'{"ABCD"[j]}: {q[2][j]}\n')
+                            f.write(f'\t{"ABCD"[j]}: {q[2][j]}\n')
                         f.write('\n')
-                        g.write(f'{i + 1}: {q[1][1]}\n')
+                        g.write(f'{i + 1}: {get_key(q)}\n')
                     f.write('\n--END--')
 
 
