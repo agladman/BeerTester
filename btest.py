@@ -14,6 +14,7 @@ import uuid
 
 
 class Beer(object):
+    """Holds the name, ABV, IBU and SRM of a beer."""
 
     def __init__(self, beername, ABV, IBU, SRM):
         self.beername = beername
@@ -23,7 +24,7 @@ class Beer(object):
 
 
 def load_data():
-    # load beer data into list of objects, should get data for 92 beer styles
+    """Loads beer data, should get data for 92 beer styles. Returns objects in a list."""
     data = json.load(open('BJCP2015.json'))
     beer_objects = []
     for beer in data['beers']:
@@ -38,6 +39,7 @@ def load_data():
 
 
 def get_wrong_answer_options(my_correct_answer, my_list):
+    """Gathers three wrong answer options and returns them in a list."""
     options = []
     while len(options) < 3:
         c = random.choice(my_list)
@@ -53,6 +55,9 @@ def get_wrong_answer_options(my_correct_answer, my_list):
 
 
 def build_question(my_beer, my_beer_list):
+    """Constructs a question. Returns a list containing the beer name, the figure on which
+        the question is based (ABV, IBU or SRM), the correct answer and three incorrect
+        answer options."""
     correct_answer = random.choice([my_beer.ABV, my_beer.IBU, my_beer.SRM])
     answer_options = get_wrong_answer_options(correct_answer, my_beer_list)
     answer_options.append(correct_answer[1])
@@ -60,54 +65,39 @@ def build_question(my_beer, my_beer_list):
     return [my_beer.beername, correct_answer, answer_options]
 
 
-def show_question(my_list):
-    time.sleep(1)
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print(f'\n\nWhat is the {my_list[1][0]} of {my_list[0]}?\n')
-    for i in range(4):
-        print(f'\t{"ABCD"[i]}: {my_list[2][i]}')
-
-
 def get_key(question):
+    """Indicates which option out of A, B, C or D is the correct answer."""
     keys = 'A B C D'.split()
     for i, o in enumerate(question[2]):
         if o == question[1][1]:
             return keys[i]
 
 
-def ask(question):
-    show_question(question)
+def ask(qnum, question):
+    """Displays the question in the terminal window, then aptures and evaluates the user's answer."""
+    time.sleep(1)
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(f'\n\n\tQ{qnum + 1}: What is the {question[1][0]} of {question[0]}?\n')
+    for i in range(4):
+        print(f'\t\t{"ABCD"[i]}: {question[2][i]}')
     while True:
-        answer = input('\nEnter A, B, C, or D: ')
+        answer = input('\n\tEnter A, B, C, or D: ')
         if answer.upper() in set('ABCD'):
             break
         else:
-            print('\nInvalid answer.')
+            print('\n\tInvalid answer.')
     if answer.upper() == get_key(question):
         time.sleep(0.5)
-        print('\nCorrect!')
+        print('\n\tCorrect!')
         return True
     else:
         time.sleep(0.5)
-        print(f'\nUh oh. The answer was {question[1][1]}')
+        print(f'\n\tUh oh. The answer was {question[1][1]}')
         return False
 
 
-def score(question, my_score):
-    if ask(question):
-        my_score += 1
-    return my_score
-
-
-def go():
-    """quick n durty checker func."""
-    beers = load_data()
-    b = random.choice(beers)
-    q = build_question(b, beers)
-    return beers, b, q
-
-
 def set_length():
+    """Asks the user for the number of questions to ask in the quiz. This must be between 0 and 30."""
     l = input('Enter number of questions to ask: ')
     while True:
         if l.isdigit() and 0 < int(l) <= 30:
@@ -116,7 +106,15 @@ def set_length():
             print('invalid answer, please enter a number between 0 and 30.')
 
 
+def build_queue(my_list):
+    """Returns a shuffled copy of a list."""
+    result = [x for x in my_list]
+    random.shuffle(result)
+    return result
+
+
 def main():
+    """Runs the script."""
     # set arguments for argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--studyaid", help="creates a study aid instead of the test",
@@ -149,8 +147,9 @@ def main():
 
         # compile questions
         questions = []
+        queue = build_queue(beers)
         for _ in range(length):
-            b = random.choice(beers)
+            b = queue.pop(0)
             q = build_question(b, beers)
             questions.append(q)
 
@@ -158,11 +157,13 @@ def main():
         if args.terminal:
             my_score = 0
             for i, q in enumerate(questions):
-                print(f'\nQ{i}')
-                my_score = score(q, my_score)
+                if ask(i, q):
+                    my_score += 1
                 time.sleep(0.5)
             os.system('cls' if os.name == 'nt' else 'clear')
-            print(f'\n\nThe test is over. Your score is {my_score}')
+            print(f'\n\n\n\n\n\t\t\tThe test is over. You scored {my_score}/{length}.\n')
+            time.sleep(3.5)
+            os.system('cls' if os.name == 'nt' else 'clear')
 
         # if the terminal option was not given output questions and answer key to text files
         else:
